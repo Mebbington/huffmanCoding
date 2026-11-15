@@ -6,9 +6,9 @@
  *  Number of slip days used:
  *
  *  Student 1 (Student whose Canvas account is being used)
- *  UTEID:
- *  email address:
- *  Grader name:
+ *  UTEID: amo3635
+ *  email address: amo3635@my.utexas.edu
+ *  Grader name: Jason
  *
  *  Student 2
  *  UTEID:
