@@ -16,7 +16,7 @@ public class Main {
          */
 
         String s = "122 67 100 69 69 85 69 -1";
-        TreeNodeInOrder(createHuffTree(getFrequencyMapTest(s)));
+        printTree(createHuffTree(getFrequencyMapTest(s)), 0);
 
     }
 
@@ -76,5 +76,21 @@ public class Main {
             System.out.print(n);
             TreeNodeInOrder(n.getRight());
         }
+    }
+
+    public static void printTree(TreeNode root, int level) {
+        if (root == null) {
+            return;
+        }
+
+        printTree(root.getRight(), level + 1);
+
+        for (int i = 0; i < level; i++) {
+            System.out.print("    ");
+        }
+
+        System.out.println(root.getFrequency());
+
+        printTree(root.getLeft(), level + 1);
     }
 }

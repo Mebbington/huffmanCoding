@@ -31,7 +31,7 @@ public class PriorityQ {
         //todo when empty, when not empty, when not empty and we don't find place to add
         int ogSize = con.size();
         for (int i = 0; i < con.size(); i++) {
-            if (newNode.getFrequency() <= con.get(i).getFrequency()) {
+            if (newNode.getFrequency() >= con.get(i).getFrequency()) {
                 con.add(i, newNode);
                 break;
                 //todo can we break jason
@@ -41,6 +41,7 @@ public class PriorityQ {
             con.add(newNode);
         }
     }
+
 
     public TreeNode deQueue() {
         return con.remove(con.size() - 1);
