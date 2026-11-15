@@ -26,6 +26,7 @@ public class PriorityQ {
         con = new ArrayList<>();
     }
 
+    // todo do we need to prioritize certain vals? tie breaker ambiguity if not
     public void enQueue(TreeNode newNode) {
         //todo when empty, when not empty, when not empty and we don't find place to add
         int ogSize = con.size();
@@ -47,6 +48,10 @@ public class PriorityQ {
 
     public int size() {
         return con.size();
+    }
+
+    public boolean isEmpty() {
+        return con.size() == 0;
     }
 
     public void printQ() {
