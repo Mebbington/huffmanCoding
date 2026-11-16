@@ -16,9 +16,12 @@
  *
  */
 
-//todo do i have to comment this class
 import java.util.ArrayList;
 
+//implementation of a priority queue using an arraylist as the internal storage container, the
+// front of the arraylist is the back of the queue and the back of the arraylist is the front of
+// the queue. This queue breaks ties fairly, so if an element of equal priority is enqueued, it
+// is put behind elements of equal priority that have been in the queue for longer.
 public class PriorityQ {
     private ArrayList<TreeNode> con;
 
@@ -42,6 +45,11 @@ public class PriorityQ {
         }
     }
 
+    //pre: none
+    //post: queue is empty
+    public void clear() {
+        con = new ArrayList<>();
+    }
 
     public TreeNode deQueue() {
         return con.remove(con.size() - 1);

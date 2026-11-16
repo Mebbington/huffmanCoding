@@ -21,12 +21,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
-
+    //todo update this in preprocess
+    private TreeNode huffRoot;
     /**
      * Preprocess data so that compression is possible ---
      * count characters/create tree/store state so that
@@ -46,6 +48,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
+        //todo can we remove these warnings?
         showString("Not working yet");
         myViewer.update("Still not working");
         //throw new IOException("preprocess not implemented");
@@ -74,12 +77,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     }
 
     private HashMap<Integer, Integer> getFrequencyMap(InputStream in) throws IOException {
-        //todo does inputstream.read()
         HashMap<Integer, Integer> result = new HashMap<>();
+        //todo should we use bitInputStream?
         boolean done = false;
         while (!done) {
             //todo IMPORTANT returns [0 to 255] NOT IN BINARY
             int bits = in.read();
+            //todo HowTo mentions a method that reads bits at a time? is this good?
             if (bits == -1) {
                 done = true;
             } else {
@@ -118,6 +122,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             queue.enQueue(node);
         }
         return queue;
+    }
+
+    //todo should this be a map or hashmap
+    private Map<Integer, String> getHuffCodeMap() {
+        return null;
     }
 
     /**
