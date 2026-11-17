@@ -126,7 +126,22 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     //todo should this be a map or hashmap
     private Map<Integer, String> getHuffCodeMap() {
-        return null;
+        Map<Integer, String> huffMap = new HashMap<>();
+        fillHuffCodeMap(huffMap, huffRoot, "");
+        return huffMap;
+    }
+
+    //todo fill
+    //todo use stringBuilder?
+    private void fillHuffCodeMap(Map<Integer, String> map, TreeNode n, String s) {
+        if(n != null) {
+            if (n.isLeaf()) {
+                map.put(n.getValue(), s);
+            } else {
+                fillHuffCodeMap(map, n.getLeft(), s + "0");
+                fillHuffCodeMap(map, n.getRight(), s + "1");
+            }
+        }
     }
 
     /**
