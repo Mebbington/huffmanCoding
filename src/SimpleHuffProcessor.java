@@ -19,16 +19,14 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
     //todo update this in preprocess
-    private TreeNode huffRoot;
+    //private TreeNode huffRoot;
+    //todo private final int MAGIC_NUM =
     /**
      * Preprocess data so that compression is possible ---
      * count characters/create tree/store state so that
@@ -48,11 +46,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
-        //todo can we remove these warnings?
-        showString("Not working yet");
-        myViewer.update("Still not working");
-        //throw new IOException("preprocess not implemented");
-        HashMap<Integer, Integer> freq = getFrequencyMap(in);
+        //TreeMap<Integer, Integer> freq = getFrequencyMap(in);
+        //huffRoot = createHuffTree(freq);
         return 0;
     }
 
@@ -76,54 +71,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         //return 0;
     }
 
-    private HashMap<Integer, Integer> getFrequencyMap(InputStream in) throws IOException {
-        HashMap<Integer, Integer> result = new HashMap<>();
-        //todo should we use bitInputStream?
-        boolean done = false;
-        while (!done) {
-            //todo IMPORTANT returns [0 to 255] NOT IN BINARY
-            int bits = in.read();
-            //todo HowTo mentions a method that reads bits at a time? is this good?
-            if (bits == -1) {
-                done = true;
-            } else {
-                if (!result.containsKey(bits)) {
-                    result.put(bits, 1);
-                } else {
-                    result.put(bits, result.get(bits) + 1);
-                }
-            }
-        }
-        System.out.println(result);
-        return result;
-    }
-
-    private TreeNode createHuffTree(HashMap<Integer, Integer> freq) {
-        PriorityQ queue = enqueueAll(freq);
-        while (queue.size() > 1) {
-            TreeNode node1 = queue.deQueue();
-            TreeNode node2 = queue.deQueue();
-            // todo DANGEROUS NODE -1
-            TreeNode newNode =
-                new TreeNode(-1,node1.getFrequency() + node2.getFrequency());
-            newNode.setLeft(node1);
-            newNode.setRight(node2);
-            queue.enQueue(newNode);
-        }
-
-        return queue.deQueue();
-    }
-
-    private PriorityQ enqueueAll(HashMap<Integer, Integer> map) {
-        Set<Integer> keys = map.keySet();
-        PriorityQ queue = new PriorityQ();
-        for (Integer key : keys) {
-            TreeNode node = new TreeNode(key, map.get(key));
-            queue.enQueue(node);
-        }
-        return queue;
-    }
-
+    /*
     //todo should this be a map or hashmap
     private Map<Integer, String> getHuffCodeMap() {
         Map<Integer, String> huffMap = new HashMap<>();
@@ -143,6 +91,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             }
         }
     }
+     */
 
     /**
      * Uncompress a previously compressed stream in, writing the
