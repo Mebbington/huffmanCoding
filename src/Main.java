@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class Main {
@@ -22,5 +23,15 @@ public class Main {
         //printTree(createHuffTree(getFrequencyMapTest(s)), 0);
         HuffTree tree = new HuffTree(s);
         tree.printTree();
+
+        HuffCodeMap map = new HuffCodeMap(tree);
+        //map.printMap();
+
+        //prints out 30 bits WORKS!!!
+        int count = map.writeOut("122 67 100 69 69 85 69 -1");
+        System.out.println("Number of bits: " + count);
+
     }
+
+
 }

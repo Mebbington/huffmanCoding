@@ -92,7 +92,7 @@ public class HuffTree implements IHuffConstants{
             queue.enQueue(node);
         }
         //add EOF
-        //todo does this need to be in specfici spot in queue?
+        //todo does this need to be in specific spot in queue?
         TreeNode eof = new TreeNode(PSEUDO_EOF, 1);
         queue.enQueue(eof);
         return queue;
@@ -118,5 +118,10 @@ public class HuffTree implements IHuffConstants{
         System.out.println(root.getFrequency() + " " + root.getValue());
 
         printTreeHelper(root.getLeft(), level + 1);
+    }
+
+    // todo pre post
+    public TreeNode getRoot() {
+        return root;
     }
 }
