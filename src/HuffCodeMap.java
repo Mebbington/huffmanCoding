@@ -59,9 +59,12 @@ public class HuffCodeMap {
                 // Parse -> loss of leading zeros. Must go bit by bit.
                 String huffCode = map.get(bits);
                 for (int z = 0; z < huffCode.length(); z++) {
-                    System.out.println(huffCode.charAt(z));
+                    System.out.print(huffCode.charAt(z));
                     count++;
                 }
+                System.out.println();
+                System.out.print("ASCII: " + bits + ", Code: " + map.get(bits));
+                System.out.println();
             }
             i++;
         }

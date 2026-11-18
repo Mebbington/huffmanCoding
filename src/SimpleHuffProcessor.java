@@ -25,6 +25,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
     private HuffTree huffTree;
+    private int compressedBits;
+    private int originalBits;
+    private int headerFormat;
     private Map<Integer, String> huffMap;
     //todo update this in preprocess
     //todo private final int MAGIC_NUM =
@@ -47,10 +50,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
+        // reset bit count back to 0 before filling map
+        compressedBits = 0;
         huffTree = new HuffTree(in);
         huffMap = createCodeMap(huffTree);
-        //huffRoot = huffTree.getRoot();
-        return 0;
+        originalBits = huffTree.OGBits();
+        this.headerFormat = headerFormat;
+        return originalBits - compressedBits;
     }
 
     /**
@@ -68,37 +74,40 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file or
      *                     writing to the output file.
      */
+    //todo check force using class vars and
+    // also use class var format to decide between SCF and STF
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
         //throw new IOException("compress is not implemented");
+        // Header of File
         BitOutputStream bout = new BitOutputStream(out);
         bout.writeBits(BITS_PER_INT, MAGIC_NUMBER);
-        int inCount = 0; // <-
+        //bout.writeBits(BITS_PER_INT, STORE_COUNTS);
+        //bout.writeBits(BITS_PER_INT, STORE_TREE);
+
         ArrayList<Integer> toWrite = new ArrayList<>();
-        int count = 0;
         boolean done = false;
         BitInputStream bin = new BitInputStream(in);
         while (!done) {
             int bits = bin.readBits(BITS_PER_WORD);
-            inCount += BITS_PER_WORD; // <-
             if (bits == -1) {
                 done = true;
             } else {
-                // Parse -> loss of leading zeros. Must go bit by bit.
                 String huffCode = huffMap.get(bits);
                 for (int i = 0; i < huffCode.length(); i++) {
                     //out.write(Integer.parseInt(""+huffCode.charAt(i)));
                     toWrite.add(Integer.parseInt(""+huffCode.charAt(i)));
-                    count++;
                 }
             }
         }
+        /*
         if (count > inCount && !force) {
             myViewer.showError("Compression results in more bits."); // todo show error or show message?
         }
+         */
         for (int bit : toWrite) {
             out.write(bit); // <-
         }
-        return count;
+        return compressedBits;
     }
 
     private Map<Integer, String> createCodeMap(HuffTree ht) {
@@ -108,15 +117,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return huffMap;
     }
 
-    //todo fill
-    //todo use stringBuilder?
-    //todo check string space issue?
     private void fillHuffCodeMap(Map<Integer, String> map, TreeNode n, String s) {
         if(n != null) {
             if (n.isLeaf()) {
+                compressedBits += s.length() * n.getFrequency();
                 map.put(n.getValue(), s);
             } else {
-                StringBuilder sb = new StringBuilder(s);
+                StringBuilder sb = new StringBuilder(s); //TODO FIX SB
                 fillHuffCodeMap(map, n.getLeft(), new String(sb.append("0")));
                 fillHuffCodeMap(map, n.getRight(), new String(sb.append("1")));
             }

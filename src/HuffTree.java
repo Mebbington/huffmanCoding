@@ -9,6 +9,7 @@ import java.util.TreeMap;
 //todo comment class
 public class HuffTree implements IHuffConstants{
     private TreeNode root;
+    private int originalBits;
 
     public HuffTree(InputStream in) throws IOException {
         TreeMap<Integer, Integer> freqMap = getFrequencyMap(in);
@@ -31,6 +32,7 @@ public class HuffTree implements IHuffConstants{
             //returns int [0 to 255] NOT IN BINARY
             //int bits = in.read();
             int bits = bin.readBits(BITS_PER_WORD);
+            originalBits += BITS_PER_WORD;
             if (bits == -1) {
                 done = true;
             } else {
@@ -118,6 +120,10 @@ public class HuffTree implements IHuffConstants{
         System.out.println(root.getFrequency() + " " + root.getValue());
 
         printTreeHelper(root.getLeft(), level + 1);
+    }
+
+    public int OGBits() {
+        return originalBits;
     }
 
     // todo pre post
