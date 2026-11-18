@@ -96,7 +96,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             //todo IS NUMBER OF BITS INCLUDING THE VALUE bit sequences?
         }
 
-        ArrayList<Integer> toWrite = new ArrayList<>();
         boolean done = false;
         BitInputStream bin = new BitInputStream(in);
         while (!done) {
@@ -106,13 +105,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             } else {
                 String huffCode = huffMap.get(bits);
                 for (int i = 0; i < huffCode.length(); i++) {
-                    toWrite.add(Integer.parseInt(""+huffCode.charAt(i)));
+                    out.write(Integer.parseInt(""+huffCode.charAt(i)));
+                    //out.write(Integer.parseInt(huffCode.substring(i,i+1)));
+                    // todo check stress tests
                 }
             }
-        }
-        //todo why do we write lik this? and why with out and not bout?
-        for (int bit : toWrite) {
-            out.write(bit); // <-
         }
         return compressedBits;
     }

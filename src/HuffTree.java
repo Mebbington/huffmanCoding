@@ -16,8 +16,6 @@
  *
  */
 
-import apple.laf.JRSUIUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -112,6 +110,7 @@ public class HuffTree implements IHuffConstants{
             newNode.setLeft(node1);
             newNode.setRight(node2);
             queue.enQueue(newNode);
+            size++;
         }
 
         return queue.deQueue();
