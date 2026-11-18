@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+//todo fix imports ALL FILES
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
@@ -28,7 +29,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private int compressedBits;
     private int originalBits;
     private int headerFormat;
-    private int[] counts;
     private Map<Integer, String> huffMap;
 
     /**
@@ -56,7 +56,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         huffTree = new HuffTree(in);
         huffMap = createCodeMap(huffTree);
         originalBits = huffTree.OGBits();
-        counts = huffTree.getCounts();
         this.headerFormat = headerFormat;
         return originalBits - compressedBits;
     }
@@ -76,24 +75,22 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file or
      *                     writing to the output file.
      */
-    //todo TESTTTTT
+    //todo TESTTTTT and comment
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
         if(originalBits < compressedBits && !force) {
+            //TODO DOES COMPRESSEDBITS NEED TO ACCOUNT FOR HEADER (SCF AND STF)
             myViewer.showError("Compression results in more bits.");
+            return -1;
         }
-        //todo do i need else after this if
-
         // Header of File
         BitOutputStream bout = new BitOutputStream(out);
         bout.writeBits(BITS_PER_INT, MAGIC_NUMBER);
-        //todo okay to have SCF and STF write code in huffTree?
         if (headerFormat == STORE_COUNTS) {
             //Write header for SCF
             huffTree.writeSCF(bout);
         } else if (headerFormat == STORE_TREE){
             //Write header for STF
             huffTree.writeSTF(bout);
-            //todo IS NUMBER OF BITS INCLUDING THE VALUE bit sequences?
         }
 
         boolean done = false;
@@ -145,8 +142,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      *                     writing to the output file.
      */
     public int uncompress(InputStream in, OutputStream out) throws IOException {
-        // TODO:
-        // todo check magic num
+        //check if file has valid Huffman header
         BitInputStream bin = new BitInputStream(in);
         int magic = bin.readBits(BITS_PER_INT);
         if (magic != MAGIC_NUMBER) {
@@ -154,6 +150,16 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             return -1;
         }
 
+        //build tree based off of header
+        int headerFormat = bin.readBits(BITS_PER_INT);
+        if(headerFormat != STORE_COUNTS && headerFormat != STORE_TREE) {
+            //todo what to do here?
+            myViewer.showError("Illegal Header Format");
+            return -1;
+        }
+        huffTree = new HuffTree(bin, headerFormat);
+
+        //write out using constructed HuffTree
         boolean done = false;
         while (!done) {
             int bits = bin.readBits(1);

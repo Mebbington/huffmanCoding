@@ -30,16 +30,47 @@ public class HuffTree implements IHuffConstants{
     private int size;
 
     public HuffTree(InputStream in) throws IOException {
-        TreeMap<Integer, Integer> freqMap = getFrequencyMap(in);
+        counts = new int[ALPH_SIZE];
+        TreeMap<Integer, Integer> freqMap = getFrequencyMapFile(in);
         //todo remove print
         System.out.println(freqMap);
         root = createHuffTree(freqMap);
-        counts = new int[ALPH_SIZE];
+    }
+
+    //todo okay to overload here?
+    public HuffTree(BitInputStream bin, int headerFormat) throws IOException {
+        if(headerFormat == STORE_COUNTS) {
+            TreeMap<Integer, Integer> freqMap = getFrequencyMapHeader(bin);
+            root = createHuffTree(freqMap);
+        } else if (headerFormat == STORE_TREE) {
+            size = bin.readBits(BITS_PER_INT);
+            root = treeRec(bin);
+        }
+        //todo implement something for custom?
+    }
+
+    // todo freq is val... change maybe
+    private TreeNode treeRec(BitInputStream bin) throws IOException {
+        int bit = bin.readBits(1);
+        if (bit == 0) {
+            // internal node
+            TreeNode internal = new TreeNode(-1, 0);
+            internal.setLeft(treeRec(bin));
+            internal.setRight(treeRec(bin));
+            return internal;
+        } else if (bit == 1) {
+            // leaf node
+            int val = bin.readBits(BITS_PER_WORD + 1);
+            return new TreeNode(val, 0);
+        } else {
+            // todo THROW AN ERROR
+        }
+       return null;
     }
 
     //todo delete after tests
     public HuffTree(String s) {
-        TreeMap<Integer, Integer> freqMap = getFrequencyMap(s);
+        TreeMap<Integer, Integer> freqMap = getFrequencyMapFile(s);
         System.out.println(freqMap);
         root = createHuffTree(freqMap);
     }
@@ -47,7 +78,7 @@ public class HuffTree implements IHuffConstants{
     //pre: in != null
     //post: returns a TreeMap of value frequency pairs based on each byte in the provided
     // inputStream, also updates counts[] for writing compressedFile later.
-    private TreeMap<Integer, Integer> getFrequencyMap(InputStream in) throws IOException {
+    private TreeMap<Integer, Integer> getFrequencyMapFile(InputStream in) throws IOException {
         HashMap<Integer, Integer> result = new HashMap<>();
         boolean done = false;
         BitInputStream bin = new BitInputStream(in);
@@ -56,10 +87,10 @@ public class HuffTree implements IHuffConstants{
             int bits = bin.readBits(BITS_PER_WORD);
             originalBits += BITS_PER_WORD;
             //todo check this counts[]
-            counts[bits]++;
             if (bits == -1) {
                 done = true;
             } else {
+                counts[bits]++;
                 if (!result.containsKey(bits)) {
                     result.put(bits, 1);
                 } else {
@@ -71,7 +102,7 @@ public class HuffTree implements IHuffConstants{
     }
 
     //todo JUST FOR TESTING
-    private TreeMap<Integer, Integer> getFrequencyMap(String s) {
+    private TreeMap<Integer, Integer> getFrequencyMapFile(String s) {
         HashMap<Integer, Integer> result = new HashMap<>();
         String[] bytes = s.split(" ");
         boolean done = false;
@@ -91,6 +122,19 @@ public class HuffTree implements IHuffConstants{
             i++;
         }
         return new TreeMap<>(result);
+    }
+
+    //todo using list better herer?
+    //todo pre post
+    private TreeMap<Integer, Integer> getFrequencyMapHeader(BitInputStream bin) throws IOException {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        for(int i = 0; i < ALPH_SIZE; i++) {
+            int freq = bin.readBits(BITS_PER_INT);
+            if(freq > 0) {
+                map.put(i, freq);
+            }
+        }
+        return new TreeMap<Integer, Integer>(map);
     }
 
     //pre: freq != null
@@ -159,7 +203,7 @@ public class HuffTree implements IHuffConstants{
 
     //pre: none
     //post: writes STF header to bout file
-    //todo alex check
+    //todo print test delete
     public void writeSCF(BitOutputStream bout) {
         bout.writeBits(BITS_PER_INT, STORE_COUNTS);
         for(int i = 0; i < ALPH_SIZE; i++) {
