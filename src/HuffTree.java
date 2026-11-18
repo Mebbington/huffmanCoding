@@ -103,7 +103,7 @@ public class HuffTree implements IHuffConstants{
             throw new IllegalArgumentException("Frequency Tree cannot be null.");
         }
         PriorityQ<TreeNode> queue = enqueueAll(freq);
-        size = queue.size() - 1;
+        size = queue.size();
         while (queue.size() > 1) {
             TreeNode node1 = queue.deQueue();
             TreeNode node2 = queue.deQueue();
@@ -184,7 +184,7 @@ public class HuffTree implements IHuffConstants{
         if(n != null) {
             if(n.isLeaf()) {
                 bout.writeBits(1, 1);
-                bout.writeBits(BITS_PER_WORD, n.getValue());
+                bout.writeBits(BITS_PER_WORD + 1, n.getValue());
             } else {
                 //pre-order traversal
                 bout.writeBits(1, 0);
