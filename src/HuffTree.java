@@ -1,4 +1,22 @@
-//todo add header
+/*  Student information for assignment:
+ *
+ *  On OUR honor, Alex OR and <NAME2), this programming assignment is OUR own work
+ *  and WE have not provided this code to any other student.
+ *
+ *  Number of slip days used: 0
+ *
+ *  Student 1 (Student whose Canvas account is being used)
+ *  UTEID: amo3635
+ *  email address: amo3635@my.utexas.edu
+ *  Grader name: Jason
+ *
+ *  Student 2
+ *  UTEID:
+ *  email address:
+ *
+ */
+
+import apple.laf.JRSUIUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,29 +28,37 @@ import java.util.TreeMap;
 public class HuffTree implements IHuffConstants{
     private TreeNode root;
     private int originalBits;
+    private int[] counts;
+    private int size;
 
     public HuffTree(InputStream in) throws IOException {
         TreeMap<Integer, Integer> freqMap = getFrequencyMap(in);
+        //todo remove print
         System.out.println(freqMap);
         root = createHuffTree(freqMap);
+        counts = new int[ALPH_SIZE];
     }
 
+    //todo delete after tests
     public HuffTree(String s) {
         TreeMap<Integer, Integer> freqMap = getFrequencyMap(s);
         System.out.println(freqMap);
         root = createHuffTree(freqMap);
     }
 
-    //todo pre post
+    //pre: in != null
+    //post: returns a TreeMap of value frequency pairs based on each byte in the provided
+    // inputStream, also updates counts[] for writing compressedFile later.
     private TreeMap<Integer, Integer> getFrequencyMap(InputStream in) throws IOException {
         HashMap<Integer, Integer> result = new HashMap<>();
         boolean done = false;
         BitInputStream bin = new BitInputStream(in);
         while (!done) {
             //returns int [0 to 255] NOT IN BINARY
-            //int bits = in.read();
             int bits = bin.readBits(BITS_PER_WORD);
             originalBits += BITS_PER_WORD;
+            //todo check this counts[]
+            counts[bits]++;
             if (bits == -1) {
                 done = true;
             } else {
@@ -69,9 +95,15 @@ public class HuffTree implements IHuffConstants{
         return new TreeMap<>(result);
     }
 
-    //todo pre post
+    //pre: freq != null
+    //post: returns rootNode of the HuffTree obtained using freq.
     private TreeNode createHuffTree(TreeMap<Integer, Integer> freq) {
+        //check precondition
+        if(freq == null) {
+            throw new IllegalArgumentException("Frequency Tree cannot be null.");
+        }
         PriorityQ<TreeNode> queue = enqueueAll(freq);
+        size = queue.size() - 1;
         while (queue.size() > 1) {
             TreeNode node1 = queue.deQueue();
             TreeNode node2 = queue.deQueue();
@@ -85,10 +117,12 @@ public class HuffTree implements IHuffConstants{
         return queue.deQueue();
     }
 
-    //todo pre post
+    //pre: none
+    //post: returns a Priority Queue with all value frequency pairs in map added after
+    // wrapping them in TreeNodes, also adds a node with EOF value.
     private PriorityQ<TreeNode> enqueueAll(TreeMap<Integer, Integer> map) {
         Set<Integer> keys = map.keySet();
-        PriorityQ<TreeNode> queue = new PriorityQ();
+        PriorityQ<TreeNode> queue = new PriorityQ<>();
         for (Integer key : keys) {
             TreeNode node = new TreeNode(key, map.get(key));
             queue.enQueue(node);
@@ -100,12 +134,14 @@ public class HuffTree implements IHuffConstants{
         return queue;
     }
 
-    //todo pre post
+    //pre: none
+    //post: prints out the tree sideways
     public void printTree() {
         printTreeHelper(root, 0);
     }
 
-    //todo pre post
+    //pre:none
+    //post:prints out this level of the tree vertically
     private void printTreeHelper(TreeNode root, int level) {
         if (root == null) {
             return;
@@ -122,12 +158,57 @@ public class HuffTree implements IHuffConstants{
         printTreeHelper(root.getLeft(), level + 1);
     }
 
+    //pre: none
+    //post: writes STF header to bout file
+    //todo alex check
+    public void writeSCF(BitOutputStream bout) {
+        bout.writeBits(BITS_PER_INT, STORE_COUNTS);
+        for(int i = 0; i < ALPH_SIZE; i++) {
+            bout.writeBits(BITS_PER_INT, counts[i]);
+        }
+    }
+
+    //pre: none
+    //post: writes STF header to bout file
+    //todo alex check
+    public void writeSTF(BitOutputStream bout) {
+        bout.writeBits(BITS_PER_INT, STORE_TREE);
+        bout.writeBits(BITS_PER_INT, size);
+        recursiveSTF(bout, root);
+    }
+
+    //pre: none
+    //post: writes STF header data for n and its children
+    //todo alex check
+    private void recursiveSTF(BitOutputStream bout, TreeNode n) {
+        if(n != null) {
+            if(n.isLeaf()) {
+                bout.writeBits(1, 1);
+                bout.writeBits(BITS_PER_WORD, n.getValue());
+            } else {
+                //pre-order traversal
+                bout.writeBits(1, 0);
+                recursiveSTF(bout, n.getLeft());
+                recursiveSTF(bout, n.getRight());
+            }
+        }
+    }
+
+    //pre: none
+    //post: returns originalBits
     public int OGBits() {
         return originalBits;
     }
 
-    // todo pre post
+    //pre: none
+    //post: returns the root
     public TreeNode getRoot() {
         return root;
+    }
+
+    //pre: none
+    //post: returns the counts
+    public int[] getCounts() {
+        return counts;
     }
 }

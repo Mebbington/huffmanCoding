@@ -28,9 +28,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private int compressedBits;
     private int originalBits;
     private int headerFormat;
+    private int[] counts;
     private Map<Integer, String> huffMap;
-    //todo update this in preprocess
-    //todo private final int MAGIC_NUM =
+
     /**
      * Preprocess data so that compression is possible ---
      * count characters/create tree/store state so that
@@ -52,9 +52,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         // reset bit count back to 0 before filling map
         compressedBits = 0;
+        //create variables for compress
         huffTree = new HuffTree(in);
         huffMap = createCodeMap(huffTree);
         originalBits = huffTree.OGBits();
+        counts = huffTree.getCounts();
         this.headerFormat = headerFormat;
         return originalBits - compressedBits;
     }
@@ -74,15 +76,25 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file or
      *                     writing to the output file.
      */
-    //todo check force using class vars and
-    // also use class var format to decide between SCF and STF
+    //todo TESTTTTT
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
-        //throw new IOException("compress is not implemented");
+        if(originalBits < compressedBits && !force) {
+            myViewer.showError("Compression results in more bits.");
+        }
+        //todo do i need else after this if
+
         // Header of File
         BitOutputStream bout = new BitOutputStream(out);
         bout.writeBits(BITS_PER_INT, MAGIC_NUMBER);
-        //bout.writeBits(BITS_PER_INT, STORE_COUNTS);
-        //bout.writeBits(BITS_PER_INT, STORE_TREE);
+        //todo okay to have SCF and STF write code in huffTree?
+        if (headerFormat == STORE_COUNTS) {
+            //Write header for SCF
+            huffTree.writeSCF(bout);
+        } else if (headerFormat == STORE_TREE){
+            //Write header for STF
+            huffTree.writeSTF(bout);
+            //todo IS NUMBER OF BITS INCLUDING THE VALUE bit sequences?
+        }
 
         ArrayList<Integer> toWrite = new ArrayList<>();
         boolean done = false;
@@ -94,16 +106,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             } else {
                 String huffCode = huffMap.get(bits);
                 for (int i = 0; i < huffCode.length(); i++) {
-                    //out.write(Integer.parseInt(""+huffCode.charAt(i)));
                     toWrite.add(Integer.parseInt(""+huffCode.charAt(i)));
                 }
             }
         }
-        /*
-        if (count > inCount && !force) {
-            myViewer.showError("Compression results in more bits."); // todo show error or show message?
-        }
-         */
+        //todo why do we write lik this? and why with out and not bout?
         for (int bit : toWrite) {
             out.write(bit); // <-
         }
@@ -141,7 +148,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      *                     writing to the output file.
      */
     public int uncompress(InputStream in, OutputStream out) throws IOException {
-        //throw new IOException("uncompress not implemented");
         // TODO:
         // todo check magic num
         BitInputStream bin = new BitInputStream(in);
