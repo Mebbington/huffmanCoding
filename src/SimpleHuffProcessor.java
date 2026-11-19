@@ -51,12 +51,19 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         // reset bit count back to 0 before filling map
-        compressedBits = 0;
+        compressedBits = BITS_PER_INT; // start with MAGIC_NUM num of bits
         //create variables for compress
         huffTree = new HuffTree(in);
         huffMap = createCodeMap(huffTree);
         originalBits = huffTree.OGBits();
         this.headerFormat = headerFormat;
+        // todo include header in compressed bits
+        if (this.headerFormat == STORE_COUNTS) {
+
+        } else if (this.headerFormat == STORE_TREE) {
+
+        }
+        //System.out.println("Prepro: " + (originalBits - compressedBits));
         return originalBits - compressedBits;
     }
 
@@ -78,7 +85,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     //todo TESTTTTT and comment
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
         if(originalBits < compressedBits && !force) {
-            //TODO DOES COMPRESSEDBITS NEED TO ACCOUNT FOR HEADER (SCF AND STF)
             myViewer.showError("Compression results in more bits.");
             return -1;
         }
@@ -102,18 +108,31 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             } else {
                 String huffCode = huffMap.get(bits);
                 for (int i = 0; i < huffCode.length(); i++) {
-                    out.write(Integer.parseInt(""+huffCode.charAt(i)));
+                    //System.out.println(Integer.parseInt("" + huffCode.charAt(i)));
+                    bout.writeBits(1,Integer.parseInt(""+huffCode.charAt(i)));
                     //out.write(Integer.parseInt(huffCode.substring(i,i+1)));
                     // todo check stress tests
                 }
             }
         }
+        for (char c : huffMap.get(PSEUDO_EOF).toCharArray()) {
+            bout.writeBits(1,Integer.parseInt(""+c));
+        }
+        bout.close();
+        //System.out.println("Compr: " + (compressedBits));
+        Set<Integer> keys = huffMap.keySet();
+        for (int key : keys) {
+            //System.out.println("value: "+key+", equivalent char: "+(char)(key)+
+                //", frequency: "+"NOT OBTAINABLE"+", new code: "+huffMap.get(key));
+        }
+        //huffTree.printTree();
         return compressedBits;
     }
 
     private Map<Integer, String> createCodeMap(HuffTree ht) {
         TreeNode huffRoot = ht.getRoot();
-        Map<Integer, String> huffMap = new HashMap<>();
+        //todo hash or tree?
+        Map<Integer, String> huffMap = new TreeMap<>();
         fillHuffCodeMap(huffMap, huffRoot, "");
         return huffMap;
     }
@@ -124,9 +143,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                 compressedBits += s.length() * n.getFrequency();
                 map.put(n.getValue(), s);
             } else {
-                StringBuilder sb = new StringBuilder(s); //TODO FIX SB
-                fillHuffCodeMap(map, n.getLeft(), new String(sb.append("0")));
-                fillHuffCodeMap(map, n.getRight(), new String(sb.append("1")));
+                fillHuffCodeMap(map, n.getLeft(), s + "0");
+                fillHuffCodeMap(map, n.getRight(), s + "1");
             }
         }
     }
@@ -153,26 +171,44 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         //build tree based off of header
         int headerFormat = bin.readBits(BITS_PER_INT);
         if(headerFormat != STORE_COUNTS && headerFormat != STORE_TREE) {
-            //todo what to do here?
-            myViewer.showError("Illegal Header Format");
+            myViewer.showError("Illegal Header Format, this program does not implement " +
+                "custom header format");
             return -1;
         }
-        huffTree = new HuffTree(bin, headerFormat);
+        huffTree = new HuffTree(bin, headerFormat, myViewer);
 
         //write out using constructed HuffTree
+        BitOutputStream bout = new BitOutputStream(out);
         boolean done = false;
+        TreeNode current = huffTree.getRoot();
+        int totalBits = 0;
         while (!done) {
-            int bits = bin.readBits(1);
-            if (bits == PSEUDO_EOF) { // TODO FIX THIS READ METHOD
-                done = true;
+            //step one 'read in one bit'
+            //update current based on it
+            //check if leaf
+            int dir = bin.readBits(1);
+            if(dir == 0) {
+                current = current.getLeft();
             } else {
-                if (bits == -1) {
-                    myViewer.showError("-1 eror msg"); // TODO WRITE MSG
+                current = current.getRight();
+            }
+            if(current.isLeaf()) {
+                int val = current.getValue();
+                if(val == PSEUDO_EOF) {
+                    done = true;
+                } else {
+                    if (val == -1) {
+                        // BADDDD ERROR ON DECOMP
+                        myViewer.showError("Decomp issue, -1 error");
+                    }
+                    bout.writeBits(BITS_PER_WORD, val);
+                    totalBits+=BITS_PER_WORD;
                 }
-
+                current = huffTree.getRoot();
             }
         }
-        return 0;
+        bout.close();
+        return totalBits;
     }
 
     public void setViewer(IHuffViewer viewer) {

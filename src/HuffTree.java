@@ -28,42 +28,40 @@ public class HuffTree implements IHuffConstants{
     private int originalBits;
     private int[] counts;
     private int size;
+    private int headerBits;
 
     public HuffTree(InputStream in) throws IOException {
         counts = new int[ALPH_SIZE];
         TreeMap<Integer, Integer> freqMap = getFrequencyMapFile(in);
         //todo remove print
-        System.out.println(freqMap);
+        //System.out.println(freqMap);
         root = createHuffTree(freqMap);
     }
 
-    //todo okay to overload here?
-    public HuffTree(BitInputStream bin, int headerFormat) throws IOException {
+    public HuffTree(BitInputStream bin, int headerFormat, IHuffViewer viewer) throws IOException {
         if(headerFormat == STORE_COUNTS) {
             TreeMap<Integer, Integer> freqMap = getFrequencyMapHeader(bin);
             root = createHuffTree(freqMap);
-        } else if (headerFormat == STORE_TREE) {
+        } else {
             size = bin.readBits(BITS_PER_INT);
-            root = treeRec(bin);
+            root = treeRec(bin, viewer);
         }
-        //todo implement something for custom?
     }
 
-    // todo freq is val... change maybe
-    private TreeNode treeRec(BitInputStream bin) throws IOException {
+    private TreeNode treeRec(BitInputStream bin, IHuffViewer viewer) throws IOException {
         int bit = bin.readBits(1);
         if (bit == 0) {
             // internal node
             TreeNode internal = new TreeNode(-1, 0);
-            internal.setLeft(treeRec(bin));
-            internal.setRight(treeRec(bin));
+            internal.setLeft(treeRec(bin, viewer));
+            internal.setRight(treeRec(bin, viewer));
             return internal;
         } else if (bit == 1) {
             // leaf node
             int val = bin.readBits(BITS_PER_WORD + 1);
             return new TreeNode(val, 0);
         } else {
-            // todo THROW AN ERROR
+            viewer.showError("not a binary integer; CATASTROPHIC ERROR");
         }
        return null;
     }
@@ -71,7 +69,7 @@ public class HuffTree implements IHuffConstants{
     //todo delete after tests
     public HuffTree(String s) {
         TreeMap<Integer, Integer> freqMap = getFrequencyMapFile(s);
-        System.out.println(freqMap);
+        //System.out.println(freqMap);
         root = createHuffTree(freqMap);
     }
 
@@ -86,7 +84,6 @@ public class HuffTree implements IHuffConstants{
             //returns int [0 to 255] NOT IN BINARY
             int bits = bin.readBits(BITS_PER_WORD);
             originalBits += BITS_PER_WORD;
-            //todo check this counts[]
             if (bits == -1) {
                 done = true;
             } else {
@@ -203,7 +200,6 @@ public class HuffTree implements IHuffConstants{
 
     //pre: none
     //post: writes STF header to bout file
-    //todo print test delete
     public void writeSCF(BitOutputStream bout) {
         bout.writeBits(BITS_PER_INT, STORE_COUNTS);
         for(int i = 0; i < ALPH_SIZE; i++) {
@@ -213,7 +209,6 @@ public class HuffTree implements IHuffConstants{
 
     //pre: none
     //post: writes STF header to bout file
-    //todo alex check
     public void writeSTF(BitOutputStream bout) {
         bout.writeBits(BITS_PER_INT, STORE_TREE);
         bout.writeBits(BITS_PER_INT, size);
@@ -222,15 +217,17 @@ public class HuffTree implements IHuffConstants{
 
     //pre: none
     //post: writes STF header data for n and its children
-    //todo alex check
     private void recursiveSTF(BitOutputStream bout, TreeNode n) {
+        final int LEAF_BITS = BITS_PER_WORD + 2;
         if(n != null) {
             if(n.isLeaf()) {
                 bout.writeBits(1, 1);
                 bout.writeBits(BITS_PER_WORD + 1, n.getValue());
+                headerBits += LEAF_BITS;
             } else {
                 //pre-order traversal
                 bout.writeBits(1, 0);
+                headerBits += 1;
                 recursiveSTF(bout, n.getLeft());
                 recursiveSTF(bout, n.getRight());
             }
@@ -247,11 +244,5 @@ public class HuffTree implements IHuffConstants{
     //post: returns the root
     public TreeNode getRoot() {
         return root;
-    }
-
-    //pre: none
-    //post: returns the counts
-    public int[] getCounts() {
-        return counts;
     }
 }
