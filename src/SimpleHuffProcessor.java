@@ -5,7 +5,7 @@
  *
  *  Number of slip days used: 0
  *
- *  Student 1 (Student whose Canvas account is being used)
+ *  Student 1 Alexander Olivares-Reed
  *  UTEID: amo3635
  *  email address: amo3635@my.utexas.edu
  *  Grader name: Jason
@@ -19,7 +19,9 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 //todo fix imports ALL FILES
 
 public class SimpleHuffProcessor implements IHuffProcessor {
